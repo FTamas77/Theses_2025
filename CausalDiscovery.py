@@ -3,160 +3,130 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.preprocessing import StandardScaler
+import seaborn as sns
 import matplotlib.pyplot as plt
 import networkx as nx
+from sklearn.preprocessing import StandardScaler
 
 # Load dataset
 df = pd.read_csv("stainless_steel_energy.csv", sep=";", encoding="utf-8", on_bad_lines="skip")
 df.rename(columns={"value": "power_consumption"}, inplace=True)
 
-# Print raw data info
-print(f"Raw DataFrame shape: {df.shape}")
-print(f"Raw DataFrame columns: {df.columns.tolist()}")
-print(f"Missing values per column:\n{df.isnull().sum()}")
+# Drop irrelevant or empty columns
+columns_to_exclude = ['heattreatment_temperatures', 'forming_temperatures', 'dimension', 'input_weight', 'mes_datetime']
+df = df.drop(columns=[col for col in columns_to_exclude if col in df.columns])
 
-# Fix numeric values (European format)
-numeric_columns = ["input_weight", "weight", "forming_temperatures", "heattreatment_temperatures", "power_consumption"]
+# Convert numeric values (handling European format)
+numeric_columns = ['weight', 'power_consumption', 'height']
 for col in numeric_columns:
-    if col in df.columns:
-        df[col] = pd.to_numeric(df[col].astype(str).str.replace(",", "."), errors='coerce')
+    df[col] = pd.to_numeric(df[col].astype(str).str.replace(",", "."), errors='coerce')
 
-# Instead of dropping rows with NaN, fill them with median values
-for col in df.columns:
-    if df[col].dtype in [np.float64, np.int64]:
-        df[col] = df[col].fillna(df[col].median())
+# Drop non-numeric categorical variables
+df_numeric = df.select_dtypes(include=[np.number])
 
-print(f"DataFrame shape after handling missing values: {df.shape}")
+# Fill missing values with median
+df_numeric = df_numeric.fillna(df_numeric.median())
 
-# Prepare numeric data for processing
-datetime_cols = [col for col in df.columns if 'time' in col.lower() or 'date' in col.lower()]
-if datetime_cols:
-    print(f"Dropping datetime columns: {datetime_cols}")
-    df_numeric = df.drop(columns=datetime_cols)
-else:
-    df_numeric = df.copy()
+# Normalize data
+scaler = StandardScaler()
+data = scaler.fit_transform(df_numeric)
+data_tensor = torch.tensor(data, dtype=torch.float32)
+input_dim = data.shape[1]
 
-# Select only numeric columns for modeling
-numeric_cols = df_numeric.select_dtypes(include=[np.number]).columns
-df_numeric = df_numeric[numeric_cols]
-print(f"Using numeric columns: {df_numeric.columns.tolist()}")
-print(f"Numeric DataFrame shape: {df_numeric.shape}")
+# Define Neural Network Model for Causal Discovery
+class NotearsMLP(nn.Module):
+    def __init__(self, dims):
+        super(NotearsMLP, self).__init__()
+        self.dims = dims
+        self.W = nn.Parameter(torch.randn(dims, dims) * 0.2)  # Increased weight initialization
+    
+    def forward(self, x):
+        return torch.relu(x @ (torch.eye(self.dims) + self.W))  # Apply ReLU to strengthen relationships
 
-# Initialize StandardScaler and apply if data exists
-if df_numeric.shape[0] > 0 and df_numeric.shape[1] > 0:
-    scaler = StandardScaler()
-    data = scaler.fit_transform(df_numeric)
-    print(f"Scaled data shape: {data.shape}")
+# DAG Constraint Function
+def dag_constraint(W):
+    M = W * W  # Hadamard product
+    return torch.trace(torch.matrix_exp(M)) - M.shape[0]
+
+# Train Model
+model = NotearsMLP(input_dim)
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)  # Adjusted learning rate decay step
+best_loss = float('inf')
+patience_counter = 0
+max_patience = 20  # Reduced patience to prevent excessive shrinking
+
+for epoch in range(1000):
+    optimizer.zero_grad()
+    output = model(data_tensor)
+    reconstruction_loss = torch.norm(output - data_tensor)
+    dag_loss = 0.000005 * dag_constraint(model.W)  # Further reduced DAG constraint weight
+    l1_reg = 0.0001 * (1 - epoch / 1000) * torch.norm(model.W, p=1)  # Dynamic L1 regularization
+    loss = reconstruction_loss + dag_loss + l1_reg
     
-    # Convert to PyTorch tensor
-    data_tensor = torch.tensor(data, dtype=torch.float32)
+    if torch.isnan(loss):
+        print(f"Epoch {epoch}: NaN loss detected! Stopping training.")
+        break
     
-    # Define Neural Network for Causal Discovery with appropriate dimensions
-    input_dim = data.shape[1]
-    print(f"Input dimension: {input_dim}")
+    loss.backward()
+    optimizer.step()
+    scheduler.step()
     
-    class NotearsMLP(nn.Module):
-        def __init__(self, dims):
-            super(NotearsMLP, self).__init__()
-            self.dims = dims
-            # Create direct weights between variables (square adjacency matrix)
-            self.W = nn.Parameter(torch.zeros(dims, dims))
-        
-        def forward(self, x):
-            # Apply learned DAG structure and non-linear transformation
-            return x @ (torch.eye(self.dims) + self.W)
+    if epoch % 50 == 0:
+        print(f"Epoch {epoch}: Loss = {loss.item():.4f}")
+        print(f"Sample W values:\n{model.W.detach().numpy()}")
     
-    # DAG Constraint Function - now using a square matrix
-    def dag_constraint(W):
-        # Make sure W is a square matrix
-        M = W * W  # Hadamard product
-        return torch.trace(torch.matrix_exp(M)) - M.shape[0]
+    if loss.item() < best_loss:
+        best_loss = loss.item()
+        patience_counter = 0
+    else:
+        patience_counter += 1
     
-    # Train Neural Network
-    model = NotearsMLP(input_dim)
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    
-    print(f"Model weight shape: {model.W.shape}")
-    
-    for epoch in range(1000):
-        optimizer.zero_grad()
-        # The W matrix directly represents our DAG adjacency matrix
-        loss = torch.norm(model(data_tensor) - data_tensor) + 0.1 * dag_constraint(model.W)
-        loss.backward()
-        optimizer.step()
-        if epoch % 100 == 0:
-            print(f"Epoch {epoch}: Loss = {loss.item()}")
-    
-    # Extract causal adjacency matrix
-    adj_matrix = model.W.detach().numpy()
-    
-    # Print adjacency matrix information for debugging
-    print(f"Adjacency matrix shape: {adj_matrix.shape}")
-    print(f"Adjacency matrix contains NaN: {np.isnan(adj_matrix).any()}")
-    print(f"Adjacency matrix contains Inf: {np.isinf(adj_matrix).any()}")
-    
-    # Replace any potential problematic values
-    adj_matrix = np.nan_to_num(adj_matrix)
-    
-    # Create a more explicit graph construction
-    G = nx.DiGraph()
-    
-    # Add nodes to the graph explicitly
-    for i in range(adj_matrix.shape[0]):
-        G.add_node(i)
-    
-    # Add edges based on adjacency matrix with threshold
-    threshold = 0.1  # Only consider strong enough connections
-    for i in range(adj_matrix.shape[0]):
-        for j in range(adj_matrix.shape[1]):
-            if abs(adj_matrix[i, j]) > threshold:
-                G.add_edge(i, j, weight=adj_matrix[i, j])
-    
-    # Create node labels safely
-    node_labels = {i: f"{str(col)[:10]}" for i, col in enumerate(df_numeric.columns)}
-    
-    plt.figure(figsize=(10, 8))
-    
-    try:
-        # Use spring_layout to explicitly calculate positions
-        pos = nx.spring_layout(G, seed=42)
-        
-        # Draw nodes
-        nx.draw_networkx_nodes(G, pos, node_size=2000, node_color="lightblue")
-        
-        # Draw edges
-        nx.draw_networkx_edges(G, pos, arrowstyle='->', arrowsize=15)
-        
-        # Draw labels separately
-        nx.draw_networkx_labels(G, pos, labels=node_labels)
-        
-        plt.title("Neural Network-Based Discovered Causal Graph")
-        plt.axis('off')
-    except Exception as e:
-        print(f"Error during graph drawing: {e}")
-        print("Attempting to use a simpler graph visualization method...")
-        
-        # Fallback to a simpler visualization method
-        plt.figure(figsize=(10, 8))
-        plt.imshow(adj_matrix, cmap='coolwarm')
-        plt.colorbar(label="Causal Strength")
-        plt.title("Causal Adjacency Matrix Heatmap")
-        plt.xticks(range(len(node_labels)), [node_labels[i] for i in range(len(node_labels))], rotation=90)
-        plt.yticks(range(len(node_labels)), [node_labels[i] for i in range(len(node_labels))])
-    
-    plt.tight_layout()
+    if patience_counter >= max_patience:
+        print(f"Early stopping at epoch {epoch}")
+        break
+
+# Extract adjacency matrix
+adj_matrix = model.W.detach().numpy()
+adj_matrix = np.nan_to_num(adj_matrix)
+
+# Adaptive thresholding for edge detection
+thresh = max(0.0005, np.percentile(np.abs(adj_matrix), 95))
+
+# Visualize adjacency matrix in a pop-up window
+plt.figure(figsize=(10, 8))
+sns.heatmap(adj_matrix, annot=True, cmap='coolwarm', xticklabels=df_numeric.columns, yticklabels=df_numeric.columns)
+plt.title("Causal Adjacency Matrix")
+plt.tight_layout()
+plt.show()
+
+# Create causal graph
+G = nx.DiGraph()
+for i in range(adj_matrix.shape[0]):
+    for j in range(adj_matrix.shape[1]):
+        if abs(adj_matrix[i, j]) > thresh:
+            G.add_edge(i, j, weight=adj_matrix[i, j])
+
+# Draw Causal Graph with Edge Weights if edges exist
+if G.number_of_edges() > 0:
+    plt.figure(figsize=(12, 10))
+    pos = nx.spring_layout(G, seed=42)
+    nx.draw(G, pos, with_labels=True, node_size=2000, node_color='lightblue', edge_color='gray', font_size=10)
+    edge_labels = {(i, j): f"{G[i][j]['weight']:.3f}" for i, j in G.edges}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
+    plt.title("Causal Graph with Edge Weights")
     plt.show()
-    
-    # Print graph statistics
-    print(f"Graph has {G.number_of_nodes()} nodes and {G.number_of_edges()} edges")
-    
-    # Debug information
-    print(f"Adjacency matrix shape: {adj_matrix.shape}")
-    print(f"Number of nodes in graph: {G.number_of_nodes()}")
-    print(f"Number of columns in df_numeric: {len(df_numeric.columns)}")
-else:
-    print("ERROR: Not enough data for causal discovery.")
-    print(f"DataFrame shape: {df.shape}")
-    print("First few rows of original data:")
-    print(df.head())
+
+# Feature Importance Analysis
+importance_scores = np.abs(adj_matrix).sum(axis=0)
+importance_df = pd.DataFrame({'Feature': df_numeric.columns, 'Importance': importance_scores})
+importance_df = importance_df.sort_values(by='Importance', ascending=False)
+
+# Plot Feature Importance in a pop-up window
+plt.figure(figsize=(10, 6))
+sns.barplot(x='Importance', y='Feature', data=importance_df)
+plt.title('Feature Importance Based on Causal Graph')
+plt.tight_layout()
+plt.show()
+
+print("Causal analysis complete. Visualizations displayed.")
