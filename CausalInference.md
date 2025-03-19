@@ -1,53 +1,71 @@
-# 🚀 ML-Based Causal Inference for Power Consumption in CNC Machines  
+# 🚀 **Machine Learning-Based Causal Inference: Theory & Application**  
 
-## **📌 Main Idea: Why Use Machine Learning for Causal Inference?**  
-Traditional statistical methods like **Ordinary Least Squares (OLS) regression** assume **linear relationships and struggle with multicollinearity**.  
-Machine Learning (**CausalForestDML**) can model **complex, non-linear causal effects** and **account for heterogeneous treatment effects (HTE)**, making it a superior choice for causal inference.
+## 📌 **Introduction**  
 
-### 🔹 **Goal:**  
-- Estimate the causal effect of **workplace assignment** on **power consumption** in CNC machines.  
-- Compare **CausalForestDML (ML-based causal inference)** with **OLS regression** to show why ML is better.  
+Causal inference aims to answer **"What would have happened if..."** questions. Traditional statistical methods like **Ordinary Least Squares (OLS)** regression assume a **single treatment effect** for everyone. However, in reality, different subgroups experience **heterogeneous treatment effects (HTE)**.
 
-### 📌 **Key Questions:**  
-- Do **different workplaces** affect energy consumption?  
-- Can we **identify inefficiencies** and **reduce power usage**?  
+This is where **Causal Forests**, implemented in `econml` as `CausalForestDML`, come into play. This document combines **theoretical insights** with a **real-world application** of `CausalForestDML` to analyze power consumption in CNC machines.
 
 ---
 
-## **📌 Code Breakdown: Step-by-Step Analysis**  
+## 🌳 **Understanding `CausalForestDML`: A Machine Learning Approach to Causal Inference**  
 
-### **1️⃣ Data Loading**  
-✅ Load the dataset from a CSV file.  
-✅ Rename columns for clarity.  
+### 🔎 **What is `CausalForestDML`?**  
+
+`CausalForestDML` is a **machine learning-based approach** that extends decision trees to estimate **heterogeneous causal effects**. Unlike standard regression models, it:  
+
+✅ Captures **non-linear relationships** in data.  
+✅ Estimates **different treatment effects** for different subgroups.  
+✅ Works well with **high-dimensional data**.  
+
+### 🏗 **How Does It Work?**  
+
+1️⃣ **Remove Confounding Bias (First-Stage ML Models)**  
+   - Estimate **propensity scores** (probability of receiving treatment).  
+   - Estimate **expected outcomes** given covariates.  
+
+2️⃣ **Estimate Heterogeneous Treatment Effects (HTE) with Causal Forests**  
+   - Train a **random forest** to estimate treatment effects.  
+   - Split data where treatment effects differ the most.  
+
+---
+
+## 🏭 **Case Study: Causal Inference for Power Consumption in CNC Machines**  
+
+### 📌 **Problem Statement**  
+
+We analyze the **causal effect of workplace assignment on power consumption** in CNC machines. Traditional OLS regression struggles due to:  
+
+❌ Assumption of **linear relationships**.  
+❌ Sensitivity to **multicollinearity**.  
+❌ Inability to capture **heterogeneous effects**.  
+
+We compare **OLS Regression** with **CausalForestDML** to show why ML-based causal inference is superior.
+
+### 📊 **Data Preparation**  
 
 ```python
-# Load the dataset
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+
+# Load dataset
 df = pd.read_csv("stainless_steel_energy.csv", sep=";", encoding="utf-8", on_bad_lines="skip")
 df.rename(columns={"value": "power_consumption"}, inplace=True)
-```
 
-### **2️⃣ Data Preprocessing**  
-✅ Convert numerical values (fix European decimal format).  
-✅ Handle missing values (impute with median).  
-✅ Encode categorical treatment variable (`workplace_id`).  
-✅ Standardize numeric features.  
-
-```python
-# Convert numerical values (handling European decimal format)
+# Handle numeric values (European decimal format)
 for col in numeric_columns:
     df[col] = pd.to_numeric(df[col].astype(str).str.replace(",", "."), errors='coerce')
 
-# Fill missing values with median
+# Fill missing values
 df.fillna(df.median(numeric_only=True), inplace=True)
 
 # Encode categorical treatment variable
-df[treatment_var] = LabelEncoder().fit_transform(df[treatment_var])
+df["workplace_id"] = LabelEncoder().fit_transform(df["workplace_id"])
 ```
 
----
+### 📌 **Causal Graph (DAG) Using DoWhy**
 
-### **3️⃣ Causal Graph (DAG) Using DoWhy**  
-📌 **Why?** Helps visualize causal relationships & confounders.
+Before applying CausalForestDML, we visualize causal relationships.
 
 ```python
 from dowhy import CausalModel
@@ -58,10 +76,11 @@ model = CausalModel(
     outcome="power_consumption",
     common_causes=["input_weight", "weight"]
 )
-model.view_model()  # Generate a DAG
+model.view_model()  # Generate DAG
 ```
 
-📊 **Expected DAG:**
+### 📊 **Expected DAG Structure**
+
 ```
 workplace_id  →  power_consumption
     ↑              
@@ -69,12 +88,7 @@ workplace_id  →  power_consumption
  input_weight, weight  (Confounders)
 ```
 
----
-
-### **4️⃣ Machine Learning-Based Causal Inference (CausalForestDML)**  
-✅ Handles multi-valued treatments (`workplace_id`)  
-✅ Estimates heterogeneous treatment effects (HTE)  
-✅ Works with high-dimensional, non-linear data  
+### 🌲 **Applying CausalForestDML for Causal Inference**
 
 ```python
 from econml.dml import CausalForestDML
@@ -91,12 +105,11 @@ treatment_effects = dml_estimator.effect(X)
 mean_effect = np.mean(treatment_effects)
 ```
 
----
+📌 **Key Takeaway:** Unlike OLS, CausalForestDML estimates how treatment effects vary across different workplaces.
 
-### **5️⃣ Validating the Model: Placebo Test**  
-📌 **Why?** Checks if the causal effect is real or just noise.  
-✅ Randomly shuffle treatment labels and recompute effects.  
-✅ If the placebo effect is close to zero, the causal model is valid.  
+### 🔬 **Validation: Placebo Test**
+
+To confirm the validity of causal estimates, we shuffle treatment labels and recompute effects.
 
 ```python
 np.random.shuffle(T)  # Randomize treatment labels
@@ -105,83 +118,75 @@ placebo_effects = dml_estimator.effect(X)
 placebo_mean = np.mean(placebo_effects)
 ```
 
-📊 **Results:**  
+### 📊 **Results Comparison**
 
 | Method | Estimated Effect |
-|--------|----------------|
+| ------ | --------------- |
 | ✅ True Treatment Effect (CausalForestDML) | -7.0973 |
 | ❌ Placebo (Randomized Treatment) | 38.1215 |
 
-🔍 **Interpretation:**  
-- The true effect (-7.1) is meaningful.  
-- The placebo test produces a randomized effect (+38.1), confirming the model's validity.  
+### 🔍 **Interpretation**
+
+- The true effect (-7.1) is meaningful.
+- The placebo test produces a randomized effect (+38.1), confirming model validity.
 
 ---
 
-### **6️⃣ Comparing with OLS Regression**  
-📌 **Why?** OLS is a traditional method but has limitations:  
-❌ Assumes linearity (not always true).  
-❌ Fails with multicollinearity (workplace variables are highly correlated).  
-❌ Single treatment effect (ignores heterogeneity).  
+## 📌 **Comparing CausalForestDML with OLS Regression**
+
+### ❌ **Why OLS Fails**
+
+OLS regression has fundamental limitations:
+- ❌ Assumes constant treatment effects.
+- ❌ Sensitive to multicollinearity.
+- ❌ Produces unrealistic effect sizes in complex settings.
 
 ```python
 import statsmodels.api as sm
 
-X_ols = np.column_stack((np.ones(len(X)), X, pd.get_dummies(df[treatment_var])))
+X_ols = np.column_stack((np.ones(len(X)), X, pd.get_dummies(df["workplace_id"])))
 ols_model = sm.OLS(Y, X_ols).fit()
 ```
 
-📊 **OLS Results:**  
+### 📊 **OLS Regression Results**
 
 | Metric | OLS Regression |
-|--------|---------------|
+| ------ | --------------- |
 | R-Squared (Model Fit) | 0.518 (51.8%) |
 | Treatment Effect Estimates | Unrealistically Large (-6.24e+11) |
 | p-values (Significance Test) | 0.983 (Not Significant) |
 | Multicollinearity Check (Condition Number) | 5.05e+16 (Severe Issues) |
 
-❌ **OLS completely fails!**  
-- **High p-values (0.98)** → No significant relationship.  
-- **Extremely large coefficients** → Unrealistic results.  
-- **Multicollinearity issues** → The model is unreliable.  
+❌ OLS fails completely!
 
-✅ **CausalForestDML is the better approach!**  
+- High p-values (0.98) → No significant relationship.
+- Extremely large coefficients → Unrealistic results.
+- Multicollinearity issues → The model is unreliable.
 
----
+✅ CausalForestDML is the better approach!
 
-## **📌 Final Interpretation: ML vs. OLS**  
+### 🎯 **Key Takeaways**
 
 | Feature | CausalForestDML (✅ Better) | OLS Regression (❌ Fails) |
-|---------|-----------------------------|---------------------------|
+| ------- | --------------------------- | ------------------------ |
 | Handles Non-Linearity | ✅ Yes (Flexible) | ❌ No (Linear Only) |
 | Handles Multicollinearity | ✅ Yes | ❌ No (Severe Issues) |
 | Heterogeneous Effects | ✅ Yes (Varies by Workplace) | ❌ No (Single Estimate) |
 | Statistical Validity | ✅ Strong (Valid Placebo Test) | ❌ Weak (p > 0.98, Large Errors) |
-| Interpretability | ✅ Realistic (-7.1 units) | ❌ Unrealistic (Huge Coefficients) |
 
-✅ **Conclusion:**  
-- **OLS fails** due to multicollinearity & restrictive assumptions.  
-- **CausalForestDML correctly estimates heterogeneous causal effects.**  
-- **ML-based causal inference is superior for real-world industrial data! 🚀**  
+✅ **Conclusion:**
 
----
+- OLS fails due to multicollinearity & restrictive assumptions.
+- CausalForestDML correctly estimates heterogeneous causal effects.
+- ML-based causal inference is superior for real-world industrial data! 🚀
 
-## **📌 Recommendations**  
+### 📌 **Recommendations for Energy Efficiency**
 
-📌 **How can we reduce power consumption?**  
-✅ Investigate workplace efficiency differences – Which workplaces use more power?  
-✅ Analyze machine maintenance schedules – Older machines may consume more power.  
-✅ Train operators for energy efficiency – Process control could reduce waste.  
-✅ Collect more data – Additional variables (forming/heating temperatures) could refine the model.  
+- ✅ Investigate workplace efficiency differences.
+- ✅ Analyze machine maintenance schedules.
+- ✅ Train operators for energy efficiency.
+- ✅ Collect more data (e.g., temperature settings).
 
----
+🚀 **ML-Based Causal Inference is the Future!**
+- ✅ More accurate, interpretable, and actionable insights than traditional regression!
 
-## **📌 Conclusion: ML-Based Causal Inference is the Future!**  
-🚀 **Machine Learning outperforms traditional regression in causal inference!**  
-
-- **OLS regression fails** in complex, industrial datasets.  
-- **CausalForestDML provides more accurate, interpretable, and actionable insights.**  
-- ✅ **ML should be preferred for causal analysis in energy efficiency studies.**  
-
-📌 **Next Steps:**  
-Would you like to explore causal effect heterogeneity per workplace? Let’s refine the model further!
