@@ -144,3 +144,176 @@ This causal discovery analysis reveals complex interdependencies in the stainles
 3. Expanding the dataset with additional process variables might reveal more complex causal pathways
 
 The neural network-based causal discovery approach demonstrated here provides a powerful tool for understanding complex industrial processes beyond what traditional correlation analysis can reveal.
+
+## Appendix: Technical Details of the Causal Discovery Approach
+
+### 1. Understanding the Neural Network Model
+
+Our goal is to build a causal model that finds how different manufacturing features influence each other.
+
+### 2. The Neural Network Structure
+
+Each neuron in our model represents one feature in the dataset.
+
+Here's a visualization of the neural network model used in the code:
+
+```
+Input Layer (Features)
+   ┌───────────┐      ┌───────────┐      ┌───────────┐
+   │  Weight   │ ───▶ │  Neuron 1 │ ───▶ │  Output 1 │
+   ├───────────┤      ├───────────┤      ├───────────┤
+   │  Height   │ ───▶ │  Neuron 2 │ ───▶ │  Output 2 │
+   ├───────────┤      ├───────────┤      ├───────────┤
+   │   Power   │ ───▶ │  Neuron 3 │ ───▶ │  Output 3 │
+   └───────────┘      └───────────┘      └───────────┘
+```
+
+### 3. How Does the Neural Network Learn Causality?
+
+Unlike regular deep learning models (which predict outcomes), this neural network discovers causal relationships.
+
+**Step-by-Step Learning Process**
+1. The input data is passed through the neural network.
+2. The model learns weights W between each feature.
+3. The DAG constraint ensures that the learned relationships don't contain cycles (i.e., no "A → B → A" loops).
+4. The network adjusts its weights using loss functions to find the best causal structure.
+
+**Example**
+
+If Weight affects Power Consumption, then:
+```
+W[Weight → Power Consumption] > 0
+```
+
+If Height has no effect on Power Consumption, then:
+```
+W[Height → Power Consumption] ≈ 0
+```
+
+This means that the network is learning how changes in one feature affect another!
+
+### 4. Causal Graph Representation
+
+Once the model finishes training, we extract the weight matrix and visualize it as a causal graph.
+
+Imagine it like this:
+```
+   Weight  ───▶ Power Consumption
+                 ▲
+                 │
+              Height
+```
+
+- If Weight affects Power Consumption, we draw an arrow from Weight → Power Consumption.
+- If Height does not affect Power Consumption, then no arrow is drawn.
+
+This graph is automatically generated based on the trained model.
+
+### 5. The DAG (Directed Acyclic Graph) Constraint
+
+**Why do we need it?**
+- A causal graph should not have loops (e.g., A → B → A).
+- The function dag_constraint(W) ensures that the model learns a DAG (Directed Acyclic Graph).
+
+**Example of a Correct DAG**
+```
+   A ───▶ B ───▶ C
+```
+This is fine because there is a clear direction.
+
+**Incorrect Graph (with cycles)**
+```
+   A ───▶ B ───▶ C
+        ▲         │
+        └─────────┘
+```
+This would cause infinite loops, and the DAG constraint prevents it!
+
+### 6. Visualization of Causal Graph
+
+Once we extract the causal relationships, we visualize the adjacency matrix using a heatmap:
+
+```python
+sns.heatmap(adj_matrix, annot=True, cmap='coolwarm')
+```
+
+This shows which features have strong relationships.
+
+Then, a graph is drawn using networkx:
+
+```python
+nx.draw(G, with_labels=True)
+```
+
+This produces a graph where nodes are features and arrows are causal effects.
+
+**Example Graph Output**
+
+Imagine a simple case where we have three features:
+
+```
+   Temperature  ───▶ Power Consumption
+       ▲
+       │
+     Weight
+```
+
+This means:
+- Weight affects Temperature
+- Temperature affects Power Consumption
+- There is no direct link between Weight and Power Consumption
+
+### 7. Feature Importance Analysis
+
+At the end, the script calculates how important each feature is in the causal structure.
+
+```python
+importance_scores = np.abs(adj_matrix).sum(axis=0)
+```
+
+This sums up how much each feature influences other features.
+
+A bar plot is created to show this visually:
+
+```
+Feature Importance
+-----------------------
+Power Consumption  | ██████████
+Weight            | ████████  
+Height            | ████      
+```
+
+This helps understand which variables are most influential.
+
+### 8. Indirect Causal Effects
+
+The script also finds indirect pathways:
+
+```python
+def calculate_indirect_effects(G, source, target):
+    paths = list(nx.all_simple_paths(G, source=source, target=target))
+    return sum(path_effect for each path)
+```
+
+For example:
+```
+Weight ─▶ Temperature ─▶ Power Consumption
+```
+
+Even though there is no direct connection between Weight and Power Consumption, the indirect effect exists via Temperature!
+
+### Final Summary
+
+**🧠 What This Code Does**
+- Reads and processes the dataset (cleaning, normalization).
+- Builds a neural network where each feature is a neuron.
+- Trains the network to learn causal relationships between features.
+- Applies a DAG constraint to ensure proper cause-effect flow.
+- Extracts and visualizes causal relationships as a graph.
+- Analyzes feature importance and indirect effects.
+
+**📌 Key Takeaways**
+- ✅ Each neuron represents a feature (like Weight, Height, Power Consumption).
+- ✅ The weight matrix (W) tells us how features influence each other.
+- ✅ The DAG constraint ensures a proper cause-effect relationship.
+- ✅ The final graph tells us which features drive changes in others.
