@@ -23,7 +23,28 @@ As Rudin (2019)[^1] notes, the increasing complexity of ML models often comes wi
 | **Hidden Confounders** | If a model finds spurious correlations, causal claims might be misleading. | In education policy, an ML model might attribute student performance improvements to a program when socioeconomic factors are the true cause. |
 | **Regulatory & Ethical Concerns** | Industries like healthcare and finance require explainability for compliance. | The EU's GDPR and "right to explanation" mandates that algorithmic decisions affecting individuals must be explainable. |
 
-![Black-Box vs Interpretable Approaches](https://mermaid.ink/img/pako:eNptkU1rwzAMhv-K0GmD_QGDHbKuUNihh9Ft7LBdgiPFEYljB9vZGKP_fbaTbF3ZRUh6JV7J70Q1SY0YSZHMCw05aULhjPu6NsbaQdx2c5YZkfXQWNuIDgbQwgPJjm5ZMxTF6tLgTmH3r46l04VEnc0zqPpFwNy4DQbqZ-aMdHDBSO1wGYqo8c5IHfkXOuWVEGYDJpXG_VlI8c0-4nBMHaahQ_r0_7WujnweeNhD5yKz4oo9jU17HV7tJdxhS44vrnXfmeFkQl8kw_OUdyjjn5Rz1fNJnUlOdWgK88z9E62sKFEu_Tjmn4jcKHLG6YsUVG5lkWiR-cDqt1aMNi-Eb40ZDfIHsnCR7Q?type=png)
+```mermaid
+graph LR
+    subgraph "Black-Box Approaches"
+        A[Data] --> B[Complex ML Model]
+        B --> C[Causal Prediction]
+        style B fill:#000,color:#fff
+    end
+    
+    subgraph "Interpretable Approaches"
+        D[Data] --> E[Transparent Model]
+        E --> F[Explainable Causal Prediction]
+        style E fill:#fff,stroke:#000
+    end
+    
+    subgraph "Hybrid Approach"
+        G[Data] --> H[Black-Box ML Model]
+        H --> I[Post-hoc Explanations]
+        I --> J[Interpretable Causal Insights]
+        style H fill:#000,color:#fff
+        style I fill:#aaf
+    end
+```
 
 These challenges highlight the need for **explainable AI (XAI) techniques** to make black-box causal models more interpretable while preserving their predictive power – what Pearl (2019)[^2] calls "the best of both worlds."
 
