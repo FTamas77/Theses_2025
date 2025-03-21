@@ -39,10 +39,13 @@ graph LR
     
     subgraph "Hybrid Approach"
         G[Data] --> H[Black-Box ML Model]
-        H --> I[Post-hoc Explanations]
-        I --> J[Interpretable Causal Insights]
+        H --> I[Post-hoc XAI Methods]
+        I --> J[Model Interpretability]
+        J --> K[Causal Validation]
+        K --> L[Trustworthy Causal Insights]
         style H fill:#000,color:#fff
         style I fill:#aaf
+        style K fill:#faa
     end
 ```
 
