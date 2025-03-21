@@ -137,25 +137,6 @@ causal_graph = NotearsMLP(X)
 nx.draw(causal_graph, with_labels=True)
 ```
 
-## 📋 Real-World Examples
-
-This table summarizes key applications of causal methods:
-
-| Approach | Application | Method | Interpretability | Challenge | Solution | Reference |
-|----------|-------------|--------|-----------------|-----------|----------|-----------|
-| **Traditional Inference** | Education ROI | IV | ✅ High: Clear coefficients | Linear limitations | N/A | Card (1999) |
-| **ML-Based Inference** | Medicine | Causal Forests | ❌ Low | Complex effects | SHAP values | Athey & Wager (2019) |
-| **Traditional Discovery** | Epidemiology | PC Algorithm | ✅ High: Clear DAGs | Computational cost | Variable subsets | Spirtes & Zhang (2016) |
-| **ML-Based Discovery** | Gene Networks | NOTEARS | ❌ Low | Validation issues | DAG + domain expertise | Zheng et al. (2018) |
-| **Hybrid** | Retail Forecasting | DML + XAI | ✅ Medium | Performance-clarity balance | 4-step framework | Industry case |
-
-### Hybrid Approach Example
-
-**Retail Demand Forecasting Process:**
-1. Economic theory → causal structure
-2. Double ML → effect estimation
-3. SHAP → variable importance
-
 ## ⚖️ Balancing Complexity & Interpretability
 
 | Feature | Traditional Causal Methods | ML-Based Causal Methods |
