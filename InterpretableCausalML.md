@@ -137,30 +137,24 @@ causal_graph = NotearsMLP(X)
 nx.draw(causal_graph, with_labels=True)
 ```
 
-## 📋 Real-World Examples Comparison
+## 📋 Real-World Examples
 
-The following table compares real-world applications of different causal inference and discovery approaches:
+This table summarizes key applications of causal methods:
 
-| Approach | Example Application | Method | Interpretability | Key Challenge | Solution | Reference |
-|----------|---------------------|--------|-----------------|---------------|----------|-----------|
-| **Traditional Causal Inference** | Returns to Education | Instrumental Variables (IV) | ✅ High: Clear coefficient interpretation (1 year education = 7-10% income increase) | Limited to linear relationships | N/A - Already interpretable | Card, D. (1999). "The causal effect of education on earnings" |
-| **ML-Based Causal Inference** | Personalized Medicine | Causal Forests | ❌ Low: No simple coefficients | Heterogeneous effects hard to interpret | SHAP values to identify key patient characteristics | Athey, S., & Wager, S. (2019). "Estimating treatment effects with causal forests" |
-| **Traditional Causal Discovery** | Epidemiology Risk Factors | PC Algorithm | ✅ High: Clear DAG visualization | Computationally expensive for large datasets | Focus on subsets of variables | Spirtes, P., & Zhang, K. (2016). "Causal discovery and inference" |
-| **ML-Based Causal Discovery** | Gene Regulatory Networks | NOTEARS | ❌ Low: Neural network complexity | Difficult to validate discoveries | DAG visualization + domain validation | Zheng, X., et al. (2018). "DAGs with NO TEARS" |
-| **Hybrid Approach** | Retail Demand Forecasting | DML + Explainability | ✅ Medium: Complex model with explanations | Balance performance vs. interpretability | 4-step process: 1) Theory, 2) DML, 3) SHAP, 4) OLS validation | N/A - Industry case study |
+| Approach | Application | Method | Interpretability | Challenge | Solution | Reference |
+|----------|-------------|--------|-----------------|-----------|----------|-----------|
+| **Traditional Inference** | Education ROI | IV | ✅ High: Clear coefficients | Linear limitations | N/A | Card (1999) |
+| **ML-Based Inference** | Medicine | Causal Forests | ❌ Low | Complex effects | SHAP values | Athey & Wager (2019) |
+| **Traditional Discovery** | Epidemiology | PC Algorithm | ✅ High: Clear DAGs | Computational cost | Variable subsets | Spirtes & Zhang (2016) |
+| **ML-Based Discovery** | Gene Networks | NOTEARS | ❌ Low | Validation issues | DAG + domain expertise | Zheng et al. (2018) |
+| **Hybrid** | Retail Forecasting | DML + XAI | ✅ Medium | Performance-clarity balance | 4-step framework | Industry case |
 
-### Deep Dive: Hybrid Approach Example
+### Hybrid Approach Example
 
-**Process for Retail Demand Forecasting:**
-1. Begin with economic theory to inform potential causal structure
-2. Apply Double Machine Learning to estimate causal effects
-3. Use SHAP values to explain the contribution of each variable
-4. Validate with simple OLS on key relationships for executive presentations
-
-**Results:**
-- 30% better predictive performance than traditional methods
-- Maintained interpretability for stakeholders
-- Successfully identified non-linear causal relationships between marketing activities and sales
+**Retail Demand Forecasting Process:**
+1. Economic theory → causal structure
+2. Double ML → effect estimation
+3. SHAP → variable importance
 
 ## ⚖️ Balancing Complexity & Interpretability
 
