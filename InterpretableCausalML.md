@@ -20,11 +20,14 @@ This document compares traditional causal inference (e.g., OLS, IV, Structural E
 
 | Feature | Traditional Methods | Pure ML-Based Methods | ML + Explainability Techniques |
 |---------|---------------------|------------------------|--------------------------------|
-| Estimates Treatment Effects? | ✅ Yes (Causal Inference) | ✅ Yes (with limitations) | ✅ Yes |
-| Learns Causal Structure? | ✅ Yes (Causal Discovery) | ✅ Yes (but opaque) | ✅ Yes (with visualization) |
-| Interpretability | ✅ High (explicit coefficients) | ❌ Low (Black-Box) | ✅ Medium (SHAP, DAGs, SEM) |
-| Actionable Insights | ✅ Yes (but simplistic) | ❌ Limited (due to opacity) | ✅ Yes (Counterfactuals, SHAP) |
-| Industrial Adoption | ✅ High (established) | ❌ Low (trust issues) | ⚠️ Growing (with explainability) |
+| Estimates Treatment Effects? | ✅ Yes (simple effects) | ✅ Yes (complex, heterogeneous) | ✅ Yes (best of both worlds) |
+| Learns Causal Structure? | ✅ Yes (limited scale) | ✅ Yes (complex networks) | ✅ Yes (with visualization) |
+| Handles High Dimensions? | ❌ No (curse of dimensionality) | ✅ Yes (thousands of variables) | ✅ Yes (with feature importance) |
+| Captures Non-Linearity? | ❌ Limited | ✅ High (automatic detection) | ✅ High (with explanation) |
+| Interpretability | ✅ High (explicit coefficients) | ❌ Low (Black-Box) | ✅ Medium-High (SHAP, DAGs, SEM) |
+| Real-World Applications | Healthcare (RCTs), Economics | Digital Marketing, Personalized Medicine, Recommendation Systems | Tech Giants (Meta, Amazon, Microsoft), Healthcare AI |
+| Computational Scalability | ❌ Poor with large datasets | ✅ Excellent (big data ready) | ✅ Good (with optimization) |
+| Industrial Adoption | ✅ Established (traditional sectors) | ✅ High (tech, digital economy) | ⚠️ Rapidly Growing (regulated industries) |
 
 ```mermaid
 graph TD
@@ -141,14 +144,16 @@ nx.draw(causal_graph, with_labels=True)
 
 | Feature | Traditional Causal Methods | ML-Based Causal Methods |
 |---------|----------------------------|-------------------------|
-| Interpretability | ✅ High (White-Box) | ❌ Low (Black-Box) |
+| Interpretability | ✅ High (White-Box) | ⚠️ Improving (With XAI techniques) |
 | Flexibility | ❌ Limited (Linear Assumptions) | ✅ High (Non-Linear, High-Dimensional) |
-| Industry Adoption | ✅ Widely Accepted | ❌ Facing Regulatory Challenges |
+| Industry Adoption | ✅ Established in traditional fields | ✅ Dominant in tech, healthcare AI, digital economy |
 | Performance in Complex Data | ❌ Weak | ✅ Strong |
+| Scalability | ❌ Poor with large datasets | ✅ Excellent |
+| Personalization | ❌ Limited (population averages) | ✅ Strong (individual-level insights) |
 
 ## 💡 Key Takeaway
 
-While ML-based causal inference and discovery handle more complex relationships, their black-box nature makes them harder to trust in industry and policy settings.
+ML-based causal inference and discovery excel at handling complex, high-dimensional data with non-linear relationships that traditional methods cannot address. While interpretability remains a challenge, modern explainability techniques are bridging this gap, making these powerful tools increasingly viable for high-stakes applications in healthcare, marketing, and policy.
 
 ## 🚀 Making ML-Based Causal Models Industry-Friendly
 
@@ -175,6 +180,6 @@ While ML-based causal inference and discovery handle more complex relationships,
 
 ## ✅ Final Summary
 
-- Traditional methods → More interpretable, but limited.
-- ML methods → More powerful, but black-box.
-- Solution? Hybrid approaches, XAI techniques, and regulatory alignment.
+- ML methods → Superior for complex data, personalized insights, and large-scale applications.
+- Traditional methods → More interpretable, but severely limited in capability.
+- The future? ML-based causal AI with integrated explainability techniques offering the best of both worlds.
