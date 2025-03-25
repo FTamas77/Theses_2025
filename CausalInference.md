@@ -93,6 +93,71 @@ workplace_id  →  power_consumption
  input_weight, weight  (Confounders)
 ```
 
+## Heterogeneous Treatment Effects (HTE) and Counterfactual Reasoning
+
+### 1️⃣ Understanding HTE in Workplace Energy Consumption
+
+The analysis estimated an **Average Treatment Effect (ATE)** of **-7.0973**, indicating that different workplaces **reduce power consumption** by approximately **7.1 units** on average. However, this **does not mean all workplaces experience the same reduction**. Some may benefit more, while others may see little to no effect. **HTE analysis helps us understand why.**  
+
+### 🔍 Key Insights from HTE
+- Workplaces **do not respond equally** to the same conditions.  
+- Some workplaces **achieve significant efficiency gains**, while others show **minimal improvement**.  
+- Factors such as **equipment efficiency, worker expertise, and operational procedures** likely influence these variations.  
+
+### 📊 What Can We Do with HTE?
+HTE reasoning enables **better decision-making** in workplace energy management:  
+
+| **HTE Question** 🤔 | **How We Use HTE Insights** 📈 |
+|----------------------|-------------------------------|
+| **Who benefits most?** | Identify workplaces with **higher efficiency gains** and study their best practices. |
+| **Who benefits least?** | Investigate reasons why certain workplaces **do not improve much**. |
+| **Why do effects differ?** | Analyze factors like **equipment maintenance, training levels, and operational differences**. |
+| **How can we optimize treatment?** | Allocate interventions **where they have the highest impact** (e.g., upgrade outdated equipment). |
+| **Should we personalize interventions?** | Develop **customized energy-saving programs** for different workplace categories. |
+
+---
+
+### 2️⃣ Counterfactual Reasoning: What If We Changed the Workplace Setup?
+
+Counterfactual reasoning allows us to ask:  
+👉 *What would have happened if a workplace had different conditions?*  
+
+Instead of just observing **what happened**, we can simulate **what could have happened under alternative scenarios**.  
+
+**Example Counterfactual Scenario:**  
+- Suppose **Workplace A** reduced power consumption by **7.1 units** under its current setup.  
+- But what if Workplace A **used newer machines** or had a **better-trained workforce**?  
+- **Counterfactual Estimation:**  
+  - **Observed Outcome:** **Y(1)** (*Current workplace settings → power reduction = -7.1*)  
+  - **Counterfactual Outcome:** **Y(0)** (*If assigned to a different workplace setup → what would the power reduction be?*)  
+
+🔹 **Findings from Counterfactual Analysis:**  
+- Some workplaces might have **achieved greater efficiency gains** if they operated under different conditions.  
+- **Policy Insight:** Future interventions should **simulate counterfactuals before implementation** to predict effectiveness.  
+
+---
+
+### 3️⃣ Validating the Causal Effect: The Placebo Test
+
+To ensure our causal inference is valid, we conducted a **placebo test** by **randomly assigning workplaces** and re-estimating the treatment effect.  
+
+✅ **Results:**  
+- **True Treatment Effect (CausalForestDML):** -7.0973  
+- **Placebo Treatment Effect (Randomized):** -0.7278  
+- The placebo effect is **close to zero**, confirming that the observed effect is **not due to random chance**, but is a **true causal effect**.  
+
+---
+
+### 4️⃣ Practical Implications: How to Optimize Workplace Energy Efficiency?
+
+🚀 **Actionable Insights from HTE & Counterfactual Reasoning:**  
+- **Identify high-performing workplaces** and study their **best practices** for energy efficiency.  
+- **Target low-performing workplaces** and **personalize interventions** (e.g., **equipment upgrades, worker training programs**).  
+- **Simulate counterfactuals** before making policy changes—test **alternative interventions** virtually to predict impact.  
+- **Collect additional data** on operational parameters (**forming & heat treatment temperatures**) to improve causal models.  
+
+By leveraging **HTE analysis and counterfactual reasoning**, we go beyond just measuring treatment effects—we gain **deep insights into optimizing workplace energy efficiency** and designing **smarter, data-driven interventions**. 🚀  
+
 ### 🌲 **Applying CausalForestDML for Causal Inference**  
 
 ```python
@@ -168,7 +233,7 @@ ols_model = sm.OLS(Y, X_ols).fit()
 ✅ Train operators for energy efficiency.  
 ✅ Collect additional covariates (e.g., machine age, operator experience, environmental factors).
 
-### 🎯 **Key Takeaways**
+### 🎯 **Key Takeaways**  
 
 | Feature | CausalForestDML (✅ Better) | OLS Regression (❌ Fails) |
 | ------- | --------------------------- | ------------------------ |
@@ -177,7 +242,7 @@ ols_model = sm.OLS(Y, X_ols).fit()
 | Heterogeneous Effects | ✅ Yes (Varies by Workplace) | ❌ No (Single Estimate) |
 | Statistical Validity | ✅ Strong (Valid Placebo Test) | ❌ Weak (p > 0.98, Large Errors) |
 
-✅ **Conclusion:**
+✅ **Conclusion:**  
 
 - OLS fails due to multicollinearity & restrictive assumptions.
 - CausalForestDML correctly estimates heterogeneous causal effects.
