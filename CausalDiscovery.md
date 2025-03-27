@@ -302,6 +302,35 @@ Weight ─▶ Temperature ─▶ Power Consumption
 
 Even though there is no direct connection between Weight and Power Consumption, the indirect effect exists via Temperature!
 
+### 9. Evaluation Metrics for Causal Discovery
+
+To rigorously assess the quality of discovered causal structures, we employ several complementary metrics:
+
+**False Discovery Rate (FDR)** 
+- Measures the proportion of incorrect causal relationships in the discovered graph
+- FDR = FP / (FP + TP), where FP = false positives, TP = true positives
+- Lower values indicate fewer spurious edges
+
+**Precision & Recall**
+- **Precision**: Proportion of discovered edges that are correct
+- **Recall**: Proportion of true edges that were successfully discovered
+- Evaluates correctness and completeness of detected causal relationships
+
+**F1 Score**
+- Harmonic mean of precision and recall: F1 = 2 * (Precision * Recall) / (Precision + Recall)
+- Balances the trade-off between precision and recall
+- Higher values indicate better overall performance
+
+**Structural Hamming Distance (SHD)**
+- Counts structural differences between true and learned graphs
+- Accounts for extra, missing, or incorrectly oriented edges
+- Lower values indicate better structural similarity
+
+**Structural Intervention Distance (SID)**
+- Assesses how accurately the model would predict the effects of interventions
+- Focuses on the practical utility of the causal model
+- Lower values indicate better intervention accuracy
+
 ### Final Summary
 
 **🧠 What This Code Does**
